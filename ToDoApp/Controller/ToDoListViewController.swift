@@ -8,6 +8,7 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
 class ToDoListViewController: SwipeTableViewController {
 
@@ -21,11 +22,51 @@ class ToDoListViewController: SwipeTableViewController {
         }
     }
 
+    @IBOutlet weak var searchBar: UISearchBar!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         tableView.rowHeight = 80.0
         
+        
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        
+        if let category = selectedCategory {
+            guard let navController = navigationController  else {
+                print("Fatal Error, Navigation Controller is not available")
+                return
+            }
+            searchBar.barTintColor = UIColor(hexString: category.backgroundColorString)
+            let navBar = navController.navigationBar
+            title = category.name
+            if let navBarColor = UIColor(hexString: category.backgroundColorString) {
+                let navBarContrastColor = ContrastColorOf(navBarColor, returnFlat: true)
+                navBar.barTintColor =  navBarColor
+                navBar.tintColor = navBarContrastColor
+                navBar.largeTitleTextAttributes = [NSAttributedStringKey.foregroundColor: navBarContrastColor]
+            } else {
+                let color = UIColor.randomFlat
+                navBar.barTintColor = color
+                navBar.tintColor = ContrastColorOf(color, returnFlat: true)
+            }
+            
+        }
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        guard let originalColor = UIColor(hexString: "04ABC5") else {
+             print("Fatal error")
+            return 
+        }
+        navigationController?.navigationBar.barTintColor = originalColor
+        navigationController?.navigationBar.tintColor = FlatWhite()
+    navigationController?.navigationBar.largeTitleTextAttributes = [NSAttributedStringKey.foregroundColor: FlatWhite()]
     }
     
     // MARK: - TableView Datasource Methods
@@ -47,8 +88,23 @@ class ToDoListViewController: SwipeTableViewController {
             // Use of Ternary Operator
             
             cell.accessoryType = item.done ? .checkmark : .none
+            if let items = toDoItems {
+                if let color = UIColor(hexString: selectedCategory!.backgroundColorString)?.darken(byPercentage: CGFloat(indexPath.row) / CGFloat(items.count)) {
+                    cell.backgroundColor = color
+                    cell.textLabel?.textColor = ContrastColorOf(color, returnFlat: true)
+                } else {
+                    let cellBgColor = UIColor.randomFlat
+                    cell.backgroundColor = cellBgColor
+                    cell.textLabel?.textColor = ContrastColorOf(cellBgColor, returnFlat: true)
+                }
+               
+            }
+            
         } else {
             cell.textLabel?.text = "No Items added yet"
+            let color = UIColor.randomFlat
+            cell.backgroundColor = color
+            cell.textLabel?.textColor = ContrastColorOf(color, returnFlat: true)
         }
        
         return cell
